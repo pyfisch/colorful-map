@@ -5,6 +5,3 @@ authors = ["Pyfisch <pyfisch@gmail.com>"]
 
 [dependencies]
 protobuf = "1.0.0"
-
-[profile.debug]
-panic = "abort"

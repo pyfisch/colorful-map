@@ -17,6 +17,7 @@ function process(mvt) {
   Module.writeArrayToMemory(array, array_p);
   const string_p = _process(array_p, length);
   const string = UTF8ToString(string_p);
+  Module._free(array_p);
   _free_cstring(string_p);
   return string;
 }

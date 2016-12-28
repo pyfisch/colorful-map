@@ -7,60 +7,10 @@ use std::ptr;
 
 use protobuf::{parse_from_reader, ProtobufResult};
 use vector_tile::{Tile, Tile_GeomType, Tile_Value};
+use storage::{Storage, Rank};
 
 pub mod vector_tile;
-
-struct Storage {
-    data: BTreeMap<u16, String>,
-    size: usize,
-}
-
-struct Rank<'a> {
-    selected: &'a mut String,
-    size: &'a mut usize,
-}
-
-impl Storage {
-    fn new() -> Storage {
-        Storage {
-            data: BTreeMap::new(),
-            size: 0,
-        }
-    }
-
-    fn select(&mut self, sort_rank: u16) -> Rank {
-        if !self.data.contains_key(&sort_rank) {
-            self.data.insert(sort_rank, String::new());
-        }
-        Rank {
-            selected: self.data.get_mut(&sort_rank)
-                               .expect("The map is not empty for the given rank."),
-            size: &mut self.size
-        }
-    }
-}
-
-impl From<Storage> for String {
-    fn from(storage: Storage) -> String {
-        let mut s = String::with_capacity(storage.size);
-        for (_, value) in storage.data.iter() {
-            s.push_str(value.as_str());
-        }
-        s
-    }
-}
-
-impl<'a> Rank<'a> {
-    fn push_str(&mut self, s: &str) {
-        (*self.size) += s.len();
-        (*self.selected).push_str(s);
-    }
-
-    fn push(&mut self, c: char) {
-        (*self.size) += 1;
-        (*self.selected).push(c);
-    }
-}
+pub mod storage;
 
 enum Command {
     MoveTo(i32, i32),

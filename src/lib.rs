@@ -1,16 +1,13 @@
 extern crate protobuf;
 
-use std::collections::{BTreeMap, HashMap};
-use std::fmt::{self, Display};
 use std::io::Read;
-use std::ptr;
 
-use protobuf::{parse_from_reader, ProtobufResult};
+use protobuf::ProtobufResult;
 
 use cursor::{Command, Cursor};
-use storage::{Storage, Rank};
+use storage::Storage;
 use tag::{Value, get_tag_map};
-use vector_tile::{Tile, Tile_GeomType, Tile_Value};
+use vector_tile::{Tile, Tile_GeomType};
 
 pub mod cursor;
 pub mod storage;
@@ -38,7 +35,7 @@ pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
                     _ => ""
                 };
                 let mut rank = storage.select(rank_value);
-                let mut cursor = Cursor::new(feature.get_geometry());
+                let cursor = Cursor::new(feature.get_geometry());
                 rank.push_format(format_args!("<path class=\"{}\" d=\"", kind));
                 for elem in cursor {
                     match elem {

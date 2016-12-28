@@ -82,7 +82,8 @@ impl<'a> Rank<'a> {
     /// Add a formatted string to the end of the text.
     pub fn push_format(&mut self, args: fmt::Arguments) {
         let len = self.selected.len();
-        (*self.selected).write_fmt(args);
+        (*self.selected).write_fmt(args)
+            .expect("writing a string never fails");
         (*self.size) += self.selected.len() - len;
     }
 }

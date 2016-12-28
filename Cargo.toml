@@ -1,0 +1,10 @@
+[package]
+name = "colorful-map"
+version = "0.1.0"
+authors = ["Pyfisch <pyfisch@gmail.com>"]
+
+[dependencies]
+protobuf = "1.0.0"
+
+[profile.debug]
+panic = "abort"

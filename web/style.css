@@ -1,0 +1,47 @@
+path {
+  stroke: transparent;
+  fill: transparent;
+}
+
+svg {
+  background-color: white;
+}
+
+.minor_road {
+  stroke: grey;
+  stroke-width: 0.5;
+}
+
+.major_road {
+  stroke: grey;
+  stroke-width: 0.8;
+}
+
+.highway {
+  stroke: orange;
+}
+
+.rail {
+  stroke: darkgreen;
+}
+
+.lake, .swimming_pool {
+  stroke: blue;
+  fill: blue;
+}
+
+.stream {
+  stroke: blue;
+}
+
+.river {
+  stroke: blue;
+  stroke-width: 3;
+}
+
+.county {
+  stroke: red;
+  stroke-width: 0.4;
+}
+
+#mapid { height: 100%; }

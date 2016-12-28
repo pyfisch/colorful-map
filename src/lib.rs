@@ -6,80 +6,15 @@ use std::io::Read;
 use std::ptr;
 
 use protobuf::{parse_from_reader, ProtobufResult};
-use vector_tile::{Tile, Tile_GeomType, Tile_Value};
+
+use cursor::{Command, Cursor};
 use storage::{Storage, Rank};
+use vector_tile::{Tile, Tile_GeomType, Tile_Value};
 
-pub mod vector_tile;
+pub mod cursor;
 pub mod storage;
+pub mod vector_tile;
 
-enum Command {
-    MoveTo(i32, i32),
-    LineTo(i32, i32),
-    ClosePath,
-}
-
-struct Turtle<'a> {
-    geometry: &'a [u32],
-    pos: usize,
-    id: u32,
-    count: u32,
-}
-
-impl<'a> Turtle<'a> {
-    fn new(geometry: &'a[u32]) -> Turtle<'a> {
-        Turtle {
-            geometry: geometry,
-            pos: 0,
-            id: 0,
-            count: 0,
-        }
-    }
-}
-
-pub fn de_zigzag(n: u32) -> i32 {
-    ((n >> 1) as i32) ^ (-((n & 1) as i32))
-}
-
-impl<'a> Iterator for Turtle<'a> {
-    type Item = Command;
-
-    fn next(&mut self) -> Option<Command> {
-        use Command::*;
-        if self.pos >= self.geometry.len() {
-            return None;
-        }
-        if self.count == 0 {
-            self.id = self.geometry[self.pos] & 0x7;
-            self.count = self.geometry[self.pos] >> 3;
-            self.pos += 1;
-        }
-        self.count -= 1;
-        if self.id == 1 {
-            if self.pos + 2 > self.geometry.len() {
-                self.pos = ::std::usize::MAX;
-                return None;
-            }
-            let x = de_zigzag(self.geometry[self.pos]);
-            let y = de_zigzag(self.geometry[self.pos + 1]);
-            self.pos += 2;
-            Some(MoveTo(x, y))
-        } else if self.id == 2 {
-            if self.pos + 2 > self.geometry.len() {
-                self.pos = ::std::usize::MAX;
-                return None;
-            }
-            let x = de_zigzag(self.geometry[self.pos]);
-            let y = de_zigzag(self.geometry[self.pos + 1]);
-            self.pos += 2;
-            Some(LineTo(x, y))
-        } else if self.id == 7 {
-            Some(ClosePath)
-        } else {
-            self.pos = ::std::usize::MAX;
-            None
-        }
-    }
-}
 
 #[derive(Debug)]
 pub enum Value<'a> {
@@ -151,31 +86,17 @@ pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
                     Value::String(x) => x,
                     _ => ""
                 };
-                // TODO: use real rank
                 let mut rank = storage.select(rank_value);
-                let mut turtle = Turtle::new(feature.get_geometry());
-                rank.push_str("<path class=\"");
-                rank.push_str(kind);
-                rank.push_str("\" d=\"");
-                for elem in turtle {
+                let mut cursor = Cursor::new(feature.get_geometry());
+                rank.push_format(format_args!("<path class=\"{}\" d=\"", kind));
+                for elem in cursor {
                     match elem {
-                        Command::MoveTo(x, y) => {
-                            rank.push_str("m ");
-                            rank.push_str((x as f32 * scale).to_string().as_str());
-                            rank.push(' ');
-                            rank.push_str((y as f32 * scale).to_string().as_str());
-                            rank.push(' ');
-                        }
-                        Command::LineTo(x, y) => {
-                            rank.push_str("l ");
-                            rank.push_str((x as f32 * scale).to_string().as_str());
-                            rank.push(' ');
-                            rank.push_str((y as f32 * scale).to_string().as_str());
-                            rank.push(' ');
-                        }
-                        Command::ClosePath => {
-                            rank.push_str("Z ");
-                        }
+                        Ok(Command::MoveTo(x, y)) => rank.push_format(
+                            format_args!("m {} {} ", (x as f32 * scale), (y as f32 * scale))),
+                        Ok(Command::LineTo(x, y)) => rank.push_format(
+                            format_args!("l {} {} ", (x as f32 * scale), (y as f32 * scale))),
+                        Ok(Command::ClosePath) => rank.push_str("Z "),
+                        Err(e) => return Err(e),
                     }
                 }
                 rank.push_str("\"></path>\n");
@@ -183,25 +104,4 @@ pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
         }
     }
     Ok(String::from(storage))
-}
-
-
-
-#[test]
-fn test_storage() {
-    let mut storage = Storage::new();
-    {
-        let mut rank = storage.select(42);
-        rank.push_str("middle rank, ");
-    }
-    {
-        let mut rank = storage.select(17);
-        rank.push_str("low ");
-        rank.push_str("rank, ");
-    }
-    {
-        let mut rank = storage.select(123);
-        rank.push_str("upper rank");
-    }
-    assert_eq!(String::from(storage).as_str(), "low rank, middle rank, upper rank");
 }

@@ -8,7 +8,8 @@ use std::slice;
 
 use colorful_map::process;
 
-#[link_args = "-s EXPORTED_FUNCTIONS=['_process_web','_free_cstring_web']"]
+#[cfg_attr(target_arch="asmjs",
+           link_args="-s EXPORTED_FUNCTIONS=['_process_web','_free_cstring_web']")]
 extern {}
 
 #[no_mangle]

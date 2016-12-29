@@ -33,13 +33,14 @@ function getURL(coords, layers='all') {
 }
 
 // The vector tile layer displays vector tiles in the Leaflet window.
+//
+// Tiles must be 256x256 pixels in size.
 const VectorTileLayer = L.GridLayer.extend({
     createTile: function(coords){
         let tile = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        const size = this.getTileSize();
-        tile.setAttribute('width', size.x);
-        tile.setAttribute('height', size.y);
-        fetch(getURL(coords))
+        tile.setAttribute('width', 256);
+        tile.setAttribute('height', 256);
+        fetch(getURL(coords), {cache: "force-cache"})
           .then(res => res.arrayBuffer())
           .then(buffer => tile.innerHTML = process(buffer));
         return tile;

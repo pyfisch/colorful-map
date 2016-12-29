@@ -51,3 +51,7 @@ svg {
   stroke: red;
   stroke-width: 0.4;
 }
+
+.earth {
+  fill: lightgrey;
+}

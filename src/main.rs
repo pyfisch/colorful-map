@@ -19,6 +19,7 @@ pub mod storage;
 pub mod tag;
 pub mod vector_tile;
 
+/// Reads a Vector File and produces an SVG fragment for a tile.
 pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
     let tile: Tile = protobuf::parse_from_reader(&mut r)?;
     let mut storage = Storage::new();
@@ -40,14 +41,14 @@ pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
                     _ => ""
                 };
                 let mut rank = storage.select(rank_value);
-                let cursor = Cursor::new(feature.get_geometry());
+                let cursor = Cursor::new(feature.get_geometry(), scale);
                 rank.push_format(format_args!("<path class=\"{}\" d=\"", kind));
                 for elem in cursor {
                     match elem {
                         Ok(Command::MoveTo(x, y)) => rank.push_format(
-                            format_args!("M {} {} ", (x as f32 * scale), (y as f32 * scale))),
+                            format_args!("M {} {} ", x, y)),
                         Ok(Command::LineTo(x, y)) => rank.push_format(
-                            format_args!("L {} {} ", (x as f32 * scale), (y as f32 * scale))),
+                            format_args!("L {} {} ", x, y)),
                         Ok(Command::ClosePath) => rank.push_str("Z "),
                         Err(e) => return Err(e),
                     }

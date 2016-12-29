@@ -6,9 +6,9 @@ use protobuf::{ProtobufError, ProtobufResult};
 /// All coordinates are abssolute.
 pub enum Command {
     /// Move the cursor to point (x, y)
-    MoveTo(i32, i32),
+    MoveTo(f32, f32),
     /// Draw a line to the given point.
-    LineTo(i32, i32),
+    LineTo(f32, f32),
     /// Return to the first point of the polygon.
     ClosePath,
 }
@@ -20,17 +20,19 @@ pub struct Cursor<'a> {
     count: u32,
     x: i32,
     y: i32,
+    scale: f32,
 }
 
 impl<'a> Cursor<'a> {
     /// Get a cursor for the geometry.
-    pub fn new(geometry: &'a[u32]) -> Cursor<'a> {
+    pub fn new(geometry: &'a[u32], scale: f32) -> Cursor<'a> {
         Cursor {
             geometry: geometry,
             id: 0,
             count: 0,
             x: 0,
             y: 0,
+            scale: scale,
         }
     }
 }
@@ -64,18 +66,19 @@ impl<'a> Iterator for Cursor<'a> {
                     format!("mvt: Expected at least two remaining integers in geometry.")
                 )))
             }
-            1 => {
+            1 | 2 => {
                 self.x += de_zigzag(self.geometry[0]);
                 self.y += de_zigzag(self.geometry[1]);
                 self.geometry = &self.geometry[2..];
-                Some(Ok(MoveTo(self.x, self.y)))
+                let x = self.x as f32 * self.scale;
+                let y = self.y as f32 * self.scale;
+                Some(Ok(if self.id == 1 {
+                    MoveTo(x, y)
+                } else {
+                    LineTo(x, y)
+                }))
+
             },
-            2 => {
-                self.x += de_zigzag(self.geometry[0]);
-                self.y += de_zigzag(self.geometry[1]);
-                self.geometry = &self.geometry[2..];
-                Some(Ok(LineTo(self.x, self.y)))
-            }
             7 => Some(Ok(ClosePath)),
             _ => {
                 self.geometry = Default::default();

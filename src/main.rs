@@ -28,7 +28,7 @@ pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
         let keys = layer.get_keys();
         let values = layer.get_values();
         for feature in layer.get_features() {
-            if feature.get_field_type() == Tile_GeomType::LINESTRING {
+            if feature.get_field_type() == Tile_GeomType::LINESTRING || feature.get_field_type() == Tile_GeomType::POLYGON {
                 let tag_map = get_tag_map(keys, values, feature.get_tags())?;
                 let rank_value = match tag_map["sort_rank"] {
                      Value::Uint64(x) => x as u16,
@@ -45,9 +45,9 @@ pub fn process<R: Read>(mut r: R) -> ProtobufResult<String> {
                 for elem in cursor {
                     match elem {
                         Ok(Command::MoveTo(x, y)) => rank.push_format(
-                            format_args!("m {} {} ", (x as f32 * scale), (y as f32 * scale))),
+                            format_args!("M {} {} ", (x as f32 * scale), (y as f32 * scale))),
                         Ok(Command::LineTo(x, y)) => rank.push_format(
-                            format_args!("l {} {} ", (x as f32 * scale), (y as f32 * scale))),
+                            format_args!("L {} {} ", (x as f32 * scale), (y as f32 * scale))),
                         Ok(Command::ClosePath) => rank.push_str("Z "),
                         Err(e) => return Err(e),
                     }

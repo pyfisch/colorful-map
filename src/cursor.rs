@@ -3,11 +3,11 @@ use protobuf::{ProtobufError, ProtobufResult};
 /// Chains of commands form paths and polygons.
 ///
 /// (0, 0) is in the upper left corner of the tile.
-/// All coordinates are relative.
+/// All coordinates are abssolute.
 pub enum Command {
-    /// Move the cursor (x, y) steps.
+    /// Move the cursor to point (x, y)
     MoveTo(i32, i32),
-    /// Draw a line (x, y) steps.
+    /// Draw a line to the given point.
     LineTo(i32, i32),
     /// Return to the first point of the polygon.
     ClosePath,
@@ -18,6 +18,8 @@ pub struct Cursor<'a> {
     geometry: &'a [u32],
     id: u32,
     count: u32,
+    x: i32,
+    y: i32,
 }
 
 impl<'a> Cursor<'a> {
@@ -27,6 +29,8 @@ impl<'a> Cursor<'a> {
             geometry: geometry,
             id: 0,
             count: 0,
+            x: 0,
+            y: 0,
         }
     }
 }
@@ -61,16 +65,16 @@ impl<'a> Iterator for Cursor<'a> {
                 )))
             }
             1 => {
-                let x = de_zigzag(self.geometry[0]);
-                let y = de_zigzag(self.geometry[1]);
+                self.x += de_zigzag(self.geometry[0]);
+                self.y += de_zigzag(self.geometry[1]);
                 self.geometry = &self.geometry[2..];
-                Some(Ok(MoveTo(x, y)))
+                Some(Ok(MoveTo(self.x, self.y)))
             },
             2 => {
-                let x = de_zigzag(self.geometry[0]);
-                let y = de_zigzag(self.geometry[1]);
+                self.x += de_zigzag(self.geometry[0]);
+                self.y += de_zigzag(self.geometry[1]);
                 self.geometry = &self.geometry[2..];
-                Some(Ok(LineTo(x, y)))
+                Some(Ok(LineTo(self.x, self.y)))
             }
             7 => Some(Ok(ClosePath)),
             _ => {

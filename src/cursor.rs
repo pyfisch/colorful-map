@@ -16,7 +16,6 @@ pub enum Command {
 /// A cursor iterates over a geometry (line or polygon).
 pub struct Cursor<'a> {
     geometry: &'a [u32],
-    pos: usize,
     id: u32,
     count: u32,
 }
@@ -26,7 +25,6 @@ impl<'a> Cursor<'a> {
     pub fn new(geometry: &'a[u32]) -> Cursor<'a> {
         Cursor {
             geometry: geometry,
-            pos: 0,
             id: 0,
             count: 0,
         }
@@ -45,39 +43,38 @@ impl<'a> Iterator for Cursor<'a> {
 
     fn next(&mut self) -> Option<ProtobufResult<Command>> {
         use Command::*;
-        if self.pos >= self.geometry.len() {
+        if self.geometry.is_empty() {
             return None;
         }
         if self.count == 0 {
-            self.id = self.geometry[self.pos] & 0x7;
-            self.count = self.geometry[self.pos] >> 3;
-            self.pos += 1;
+            let (command, geometry) = self.geometry.split_first().unwrap();
+            self.geometry = geometry;
+            self.id = command & 0x7;
+            self.count = command >> 3;
         }
         self.count -= 1;
         match self.id {
-            1 | 2 if self.pos + 2 > self.geometry.len() => {
-                self.pos = ::std::usize::MAX;
+            1 | 2 if self.geometry.len() < 2 => {
+                self.geometry = Default::default();
                 Some(Err(ProtobufError::WireError(
                     format!("mvt: Expected at least two remaining integers in geometry.")
                 )))
             }
             1 => {
-                let x = de_zigzag(self.geometry[self.pos]);
-                let y = de_zigzag(self.geometry[self.pos + 1]);
-                self.pos += 2;
+                let x = de_zigzag(self.geometry[0]);
+                let y = de_zigzag(self.geometry[1]);
+                self.geometry = &self.geometry[2..];
                 Some(Ok(MoveTo(x, y)))
             },
             2 => {
-                let x = de_zigzag(self.geometry[self.pos]);
-                let y = de_zigzag(self.geometry[self.pos + 1]);
-                self.pos += 2;
+                let x = de_zigzag(self.geometry[0]);
+                let y = de_zigzag(self.geometry[1]);
+                self.geometry = &self.geometry[2..];
                 Some(Ok(LineTo(x, y)))
             }
-            7 => {
-                Some(Ok(ClosePath))
-            }
+            7 => Some(Ok(ClosePath)),
             _ => {
-                self.pos = ::std::usize::MAX;
+                self.geometry = Default::default();
                 Some(Err(ProtobufError::WireError(
                     format!("mvt: command integer, expected 1, 2 or 7, found {}", self.id)
                 )))

@@ -28,3 +28,5 @@ Links
   (Mainly articles slice arguments and string return values)
 * [Emscripten](https://kripken.github.io/emscripten-site/) used to compile
   Rust for the browser.
+* [Compiling Rust to your Browser](http://www.hellorust.com/emscripten/)
+  Introduction into Rust and Emscripten from Rust Belt Rust 2016 by badboy

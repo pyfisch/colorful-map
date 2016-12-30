@@ -30,6 +30,10 @@ function getURL(coords, layers='all') {
 //
 // Tiles must be 256x256 pixels in size.
 const VectorTileLayer = L.GridLayer.extend({
+    getAttribution: () => `Powered by <a href="https://mapzen.com">Mapzen</a>
+- <a href="https://www.mapzen.com/rights">Attribution.</a>
+Data © <a href="https://openstreetmap.org/copyright">OSM</a>
+contributors.`,
     createTile: function(coords) {
         let tile = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         tile.setAttribute('width', 256);

@@ -60,9 +60,6 @@ impl<'a, 'k, 'v> Feature<'a, 'k, 'v> {
             -> ProtobufResult<()> {
         // class="kind-{} (boundary)? min-zoom-{}" (data-id="{}")?
         // FIXME: Malicious map tiles can do XSS.
-        if self.id == Some(1297) {
-            println!("{:?}", self.tags);
-        }
         rank.push_format(format_args!(" class=\"kind-{}",
             self.tags.get("kind").and_then(Value::str)
                 .ok_or_else(|| ProtobufError::WireError("kind is required".to_owned()))?));

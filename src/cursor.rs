@@ -1,3 +1,6 @@
+#![deny(missing_docs)]
+//! The cursor interprets a geometry and returns a chain of commands.
+
 use protobuf::{ProtobufError, ProtobufResult};
 
 /// Chains of commands form paths and polygons.
@@ -48,7 +51,7 @@ impl<'a> Iterator for Cursor<'a> {
     type Item = ProtobufResult<Command>;
 
     fn next(&mut self) -> Option<ProtobufResult<Command>> {
-        use Command::*;
+        use self::Command::*;
         if self.geometry.is_empty() {
             return None;
         }

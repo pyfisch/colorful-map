@@ -4,6 +4,8 @@ use protobuf::{ProtobufError, ProtobufResult};
 
 use vector_tile::Tile_Value;
 
+pub type TagMap<'k, 'v> = HashMap<&'k str, Value<'v>>;
+
 /// A tag value represents data associated to a key.
 ///
 /// It may either be some kind of number, a string or a boolean.
@@ -21,7 +23,7 @@ impl<'a> Value<'a> {
     /// Returns a Value for a Tile_Value.
     ///
     /// Panics if the value is empty.
-    fn from_tile_value(value: &Tile_Value) -> ProtobufResult<Value> {
+    pub fn from_tile_value(value: &Tile_Value) -> ProtobufResult<Value> {
         use Value::*;
         Ok(if value.has_string_value() {
             String(value.get_string_value())
@@ -42,23 +44,47 @@ impl<'a> Value<'a> {
                 "mvt: A value must contain data.".to_owned()));
         })
     }
-}
 
-pub fn get_tag_map<'k, 'v>(keys: &'k[String], values: &'v[Tile_Value], tags: &[u32])
-        -> ProtobufResult<HashMap<&'k str, Value<'v>>> {
-    if tags.len() % 2 != 0 {
-        return Err(ProtobufError::WireError(
-            "mvt: A tag list must be an even number of integers.".to_owned()));
-    }
-    let mut map = HashMap::new();
-    for i in 0..(tags.len() / 2) {
-        let k = tags[i * 2] as usize;
-        let v = tags[i * 2 + 1] as usize;
-        if k >= keys.len() || v >= values.len() {
-            return Err(ProtobufError::WireError(
-                "mvt: There is no such tag key/value.".to_owned()));
+    pub fn i64(&self) -> Option<i64> {
+        use Value::*;
+        match *self {
+            Int64(x) => Some(x),
+            Uint64(x) => Some(x as i64),
+            _ => None,
         }
-        map.insert(keys[k].as_str(), Value::from_tile_value(&values[v])?);
     }
-    Ok(map)
+
+    pub fn u16(&self) -> Option<u16> {
+        use Value::*;
+        match *self {
+            Int64(x) => Some(x as u16),
+            Uint64(x) => Some(x as u16),
+            _ => None,
+        }
+    }
+
+    pub fn str(&self) -> Option<&str> {
+        use Value::*;
+        match *self {
+            String(x) => Some(x),
+            _ => None,
+        }
+    }
+
+    pub fn yes(&self) -> bool {
+        use Value::*;
+        match *self {
+            Bool(true) => true,
+            _ => self.i64().unwrap_or(0) != 0,
+        }
+    }
+
+    pub fn f32(&self) -> Option<f32> {
+        use Value::*;
+        match *self {
+            Float32(x) => Some(x),
+            Float64(x) => Some(x as f32),
+            _ => None,
+        }
+    }
 }

@@ -1,6 +1,8 @@
 colorful-map
 ============
 
+Online demo: https://pyfisch.org/stuff/colorful-map/
+
 First clone the repository. Emscripten needs to be installed.
 
 Building and running colerful-map:

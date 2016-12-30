@@ -2,6 +2,10 @@
 name = "colorful-map"
 version = "0.1.0"
 authors = ["Pyfisch <pyfisch@gmail.com>"]
+description = "Render MVT map tiles as SVG fragments. Rust to ASM.js demo."
+license = "MIT/Apache-2.0"
+keywords = ["asm.js", "map", "mapzen.com", "geo"]
+readme = "README.markdown"
 
 [dependencies]
 protobuf = "1.0.0"

@@ -1,3 +1,6 @@
+//! Layers group features of similiar type and use together.
+//!
+//! Layers are a storage unit in MVT files.
 use protobuf::{ProtobufResult, ProtobufError};
 
 use feature::Feature;
@@ -5,12 +8,16 @@ use storage::Storage;
 use tag::{TagMap, Value};
 use vector_tile::Tile_Layer;
 
+/// Contains a layer and its scale.
+#[derive(Debug)]
 pub struct Layer<'l> {
     inner: &'l Tile_Layer,
-    pub scale: f32,
+    // scale
+    scale: f32,
 }
 
 impl<'l> Layer<'l> {
+    /// Creates a new layer from a Tile_Layer.
     pub fn new(raw_layer: &'l Tile_Layer) -> Layer<'l> {
         Layer {
             inner: raw_layer,
@@ -18,6 +25,7 @@ impl<'l> Layer<'l> {
         }
     }
 
+    /// Decodes the tags of a feature using the layers dictionary.
     pub fn get_tags(&self, tags: &[u32])
             -> ProtobufResult<TagMap> {
         if tags.len() % 2 != 0 {
@@ -39,11 +47,13 @@ impl<'l> Layer<'l> {
         Ok(map)
     }
 
+    /// Paints all features in the tile to the given storage.
     pub fn paint(&mut self, storage: &mut Storage) -> ProtobufResult<()> {
         for raw_feature in self.inner.get_features() {
             let mut feature = Feature::new(
                 raw_feature,
                 self.get_tags(raw_feature.get_tags())?,
+                self.inner.get_name(),
                 self.scale)?;
             let mut rank = storage.select(feature.sort_rank);
             feature.paint(&mut rank)?;

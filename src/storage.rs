@@ -1,3 +1,5 @@
+//! Provides a specialized storage for tiles.
+
 use std::collections::BTreeMap;
 use std::fmt::{self, Write};
 

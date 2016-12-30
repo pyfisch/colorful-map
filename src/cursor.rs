@@ -1,4 +1,3 @@
-#![deny(missing_docs)]
 //! The cursor interprets a geometry and returns a chain of commands.
 
 use protobuf::{ProtobufError, ProtobufResult};

@@ -6,6 +6,7 @@
 //!
 //! Intended to be run in the browser.
 
+#![deny(missing_docs)]
 // Exported functions are passed to the asm.js linker.
 #![feature(link_args)]
 
@@ -20,7 +21,6 @@ use protobuf::ProtobufResult;
 
 use storage::Storage;
 use layer::Layer;
-use tag::Value;
 use vector_tile::Tile;
 
 pub mod cursor;
@@ -28,6 +28,7 @@ pub mod feature;
 pub mod storage;
 pub mod tag;
 pub mod layer;
+#[allow(missing_docs)]
 pub mod vector_tile;
 
 /// Reads a Vector File and produces an SVG fragment for a tile.

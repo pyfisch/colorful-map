@@ -1,3 +1,8 @@
+//! Contains the Feature structure.
+//!
+//! Features are the basic building block of maps and
+//! describe all visible and invisible objects.
+
 use protobuf::{ProtobufError, ProtobufResult};
 
 use cursor::Cursor;
@@ -5,18 +10,24 @@ use tag::{TagMap, Value};
 use storage::Rank;
 use vector_tile::{Tile_Feature, Tile_GeomType as GeomType};
 
+/// A feature consists of a geometry and tagging.
+///
+/// Additionally it contains information about layer, sort_rank and scale.
 #[derive(Debug)]
 pub struct Feature<'a, 'k, 'v> {
     id: Option<i64>,
     geom_type: GeomType,
     tags: TagMap<'k, 'v>,
     geometry: &'a [u32],
+    layer: &'a str,
     scale: f32,
+    /// The rank this feature should be drawn at.
     pub sort_rank: u16,
 }
 
 impl<'a, 'k, 'v> Feature<'a, 'k, 'v> {
-    pub fn new(raw_feature: &'a Tile_Feature, tags: TagMap<'k, 'v>, scale: f32)
+    /// Creates a new feature.
+    pub fn new(raw_feature: &'a Tile_Feature, tags: TagMap<'k, 'v>, layer: &'a str, scale: f32)
             -> ProtobufResult<Feature<'a, 'k, 'v>> {
         let id = (&tags).get("id").and_then(Value::i64);
         // features without sort_rank are usally labels and
@@ -27,14 +38,16 @@ impl<'a, 'k, 'v> Feature<'a, 'k, 'v> {
             geom_type: raw_feature.get_field_type(),
             tags: tags,
             geometry: raw_feature.get_geometry(),
+            layer: layer,
             scale: scale,
             sort_rank: sort_rank})
     }
 
+    /// Compute an SVG fragment for the feature.
     pub fn paint(&mut self, rank: &mut Rank) -> ProtobufResult<()> {
         use vector_tile::Tile_GeomType::*;
         match self.geom_type {
-            // TODO: Implement point features.
+            // Points usually carry texts and need more work.
             POINT => Ok(()),
             LINESTRING => {
                 rank.push_str("<path");
@@ -56,15 +69,25 @@ impl<'a, 'k, 'v> Feature<'a, 'k, 'v> {
         }
     }
 
-    pub fn paint_metadata(&self, rank: &mut Rank)
+    fn paint_metadata(&self, rank: &mut Rank)
             -> ProtobufResult<()> {
         // class="kind-{} (boundary)? min-zoom-{}" (data-id="{}")?
         // FIXME: Malicious map tiles can do XSS.
-        rank.push_format(format_args!(" class=\"kind-{}",
+        if self.id == Some(7996457) {
+            println!("{:?}", self.tags);
+        }
+        rank.push_format(format_args!(" class=\"layer-{} kind-{}",
+            self.layer,
             self.tags.get("kind").and_then(Value::str)
                 .ok_or_else(|| ProtobufError::WireError("kind is required".to_owned()))?));
         if self.tags.get("boundary").map_or(false, Value::yes) {
             rank.push_str(" boundary");
+        }
+        if self.tags.get("is_tunnel").map_or(false, Value::yes) {
+            rank.push_str(" is_tunnel");
+        }
+        if self.tags.get("is_bridge").map_or(false, Value::yes) {
+            rank.push_str(" is_bridge");
         }
         rank.push_format(format_args!(" min-zoom-{}",
             self.tags.get("min_zoom").and_then(Value::f32).unwrap_or(0f32).floor()));
@@ -75,7 +98,7 @@ impl<'a, 'k, 'v> Feature<'a, 'k, 'v> {
         Ok(())
     }
 
-    pub fn paint_description(&mut self, rank: &mut Rank, close_path: bool)
+    fn paint_description(&mut self, rank: &mut Rank, close_path: bool)
                 -> ProtobufResult<()> {
         use cursor::Command::*;
         rank.push_str(" d=\"");

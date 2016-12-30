@@ -1,3 +1,7 @@
+// `base` and `api_key` describe the API endpoint.
+const base = 'https://tile.mapzen.com/mapzen/vector/v1/';
+const api_key = 'mapzen-j16kH4C'
+
 // A web worker is used to render the tiles.
 let worker = new Worker('worker.js');
 // The returned strings are added as innerHTML to the given element.
@@ -7,8 +11,20 @@ worker.addEventListener('message',
     // Sometimes after rendering the tile is no longer needed.
     if (elem !== null) {
       elem.innerHTML = e.data.tile;
+    } else {
+      console.log(`Element ${ e.data.id } was removed.`);
     }
 });
+
+// Gets the URL from where to load the vector tile.
+// By default it loads all layers, but you can also give it a layer
+// name or a list of layers to load.
+function getURL(coords, layers='all') {
+  if (Array.isArray(layers)) {
+    layers = layers.join();
+  }
+  return `${ base }${ layers }/${ coords.z }/${ coords.x }/${ coords.y }.mvt?api_key=${ api_key }`;
+}
 
 // The vector tile layer displays vector tiles in the Leaflet window.
 //
@@ -19,7 +35,16 @@ const VectorTileLayer = L.GridLayer.extend({
         tile.setAttribute('width', 256);
         tile.setAttribute('height', 256);
         tile.id = `${ coords.z }-${ coords.x }-${ coords.y }`;
-        worker.postMessage({id: tile.id, coords: coords});
+        fetch(getURL(coords), {cache: "force-cache"})
+          .then(res => res.blob())
+          .then(blob => {
+            if (!document.body.contains(tile)) {
+              console.log(`The tile ${ tile.id } was removed before the request completed.`);
+              return;
+            }
+            worker.postMessage({
+            id: tile.id,
+            blob: URL.createObjectURL(blob)})});
         return tile;
     }
 });

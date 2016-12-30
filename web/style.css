@@ -2,56 +2,100 @@ body {
   margin: 0;
 }
 
+svg {
+  background-color: #5ac5e3;
+}
+
 #main-map {
   height: 100%;
 }
 
+/* polygons and linestrings are invisible by default */
 path {
-  stroke: transparent;
+  display: none;
   fill: transparent;
 }
 
-svg {
-  background-color: white;
+/*** LANDUSE ***/
+.kind-forest {
+  display: inherit;
+  fill: #add19e;
 }
 
-.minor_road {
-  stroke: grey;
-  stroke-width: 0.5;
+.kind-farmland {
+  display: inherit;
+  fill: #fbecd7;
 }
 
-.major_road {
-  stroke: grey;
-  stroke-width: 0.8;
+.kind-park {
+  display: inherit;
+  fill: #c8facc;
 }
 
-.highway {
+.kind-residential {
+  display: inherit;
+  fill: #ccc;
+}
+
+/*** WATER ***/
+
+.kind-river {
+  display: inherit;
+  stroke: #5ac5e3;
+  stroke-width: 2px;
+}
+
+.kind-stream {
+  display: inherit;
+  stroke: #5ac5e3;
+}
+
+/* filling water needs more work */
+
+.kind-water {
+  display: inherit;
+  stroke: #5ac5e3;
+  fill: #5ac5e3;
+}
+
+.kind-water.boundary {
+  fill: transparent;
+}
+
+/*** ROADS ***/
+
+.kind-highway {
+  display: inherit;
+  stroke: white;
+  stroke-width: 2px;
+}
+
+.kind-major_road {
+  display: inherit;
   stroke: orange;
 }
 
-.rail {
-  stroke: darkgreen;
+.kind-minor_road {
+  display: inherit;
+  stroke: white;
 }
 
-.lake, .swimming_pool {
-  stroke: blue;
-  fill: blue;
+.kind-rail {
+  display: inherit;
+  stroke: #000;
+  stroke-width: 0.5px;
 }
 
-.stream {
-  stroke: blue;
+.kind-earth {
+  display: inherit;
+  fill: #eee;
 }
 
-.river {
-  stroke: blue;
-  stroke-width: 3;
+.kind-ocean {
+  display: inherit;
+  fill: purple;
 }
 
-.county {
-  stroke: red;
-  stroke-width: 0.4;
-}
-
-.earth {
-  fill: lightgrey;
+.kind-ocean.boundary {
+  fill: none;
 }

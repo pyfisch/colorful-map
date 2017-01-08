@@ -4,9 +4,13 @@ const api_key = 'mapzen-j16kH4C'
 
 // A web worker is used to render the tiles.
 let worker = new Worker('worker.js');
+
+let cache = {}
+
 // The returned strings are added as innerHTML to the given element.
 worker.addEventListener('message',
   function(e) {
+    cache[e.data.id] = e.data.tile;
     let elem = document.getElementById(e.data.id);
     // Sometimes after rendering the tile is no longer needed.
     if (elem !== null) {
@@ -39,6 +43,11 @@ contributors.`,
         tile.setAttribute('width', 256);
         tile.setAttribute('height', 256);
         tile.id = `${ coords.z }-${ coords.x }-${ coords.y }`;
+        if (tile.id in cache) {
+          console.log(`serving ${ tile.id } from cache`);
+          tile.innerHTML = cache[tile.id];
+          return tile;
+        }
         fetch(getURL(coords), {cache: "force-cache"})
           .then(res => res.blob())
           .then(blob => {
